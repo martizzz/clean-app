@@ -97,6 +97,10 @@
             background: var(--blue);
         }
 
+        .sync-indicator.error {
+            background: var(--red);
+        }
+
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -178,21 +182,10 @@
             color: white;
         }
 
-        .room-icon.baño {
-            background: var(--cyan);
-        }
-
-        .room-icon.salón {
-            background: var(--purple);
-        }
-
-        .room-icon.cocina {
-            background: var(--orange);
-        }
-
-        .room-icon.pasillo {
-            background: var(--green);
-        }
+        .room-icon.baño { background: var(--cyan); }
+        .room-icon.salón { background: var(--purple); }
+        .room-icon.cocina { background: var(--orange); }
+        .room-icon.pasillo { background: var(--green); }
 
         .room-info {
             flex: 1;
@@ -397,82 +390,6 @@
             font-size: 15px;
         }
 
-        .loading {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: var(--text-tertiary);
-            border-radius: 50%;
-            animation: blink 1.4s infinite;
-        }
-
-        .loading:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .loading:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes blink {
-            0%, 60%, 100% { opacity: 0.3; }
-            30% { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.6;
-            }
-        }
-
-        .history-content::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .history-content::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .history-content::-webkit-scrollbar-thumb {
-            background: #D1D1D6;
-            border-radius: 2px;
-        }
-
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 28px;
-            }
-
-            .room-label {
-                font-size: 15px;
-            }
-
-            .confirm-btn {
-                padding: 6px 8px;
-                font-size: 11px;
-            }
-
-            .expiry-badge {
-                width: 40px;
-                height: 26px;
-                font-size: 10px;
-            }
-        }
-
         .sync-status {
             font-size: 12px;
             color: var(--text-tertiary);
@@ -480,24 +397,45 @@
             padding: 8px;
             background: var(--bg-primary);
         }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .history-content::-webkit-scrollbar { width: 5px; }
+        .history-content::-webkit-scrollbar-track { background: transparent; }
+        .history-content::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 2px; }
+
+        @media (max-width: 480px) {
+            .header h1 { font-size: 28px; }
+            .room-label { font-size: 15px; }
+            .confirm-btn { padding: 6px 8px; font-size: 11px; }
+            .expiry-badge { width: 40px; height: 26px; font-size: 10px; }
+        }
     </style>
 </head>
 <body>
     <div class="status-bar"></div>
-    
+
     <div class="container">
         <div class="header">
             <h1>Limpieza</h1>
-            <div class="sync-indicator" id="syncIndicator" title="Sincronizar">✓</div>
+            <div class="sync-indicator" id="syncIndicator" title="Sincronización">✓</div>
         </div>
 
         <div class="filters-section">
-            <button class="filter-btn active" onclick="setFilter('date')">Fecha</button>
-            <button class="filter-btn" onclick="setFilter('name')">Nombre</button>
-            <button class="filter-btn" onclick="setFilter('room')">Sala</button>
+            <button class="filter-btn active" data-filter="date" onclick="setFilter('date', event)">Fecha</button>
+            <button class="filter-btn" data-filter="name" onclick="setFilter('name', event)">Nombre</button>
+            <button class="filter-btn" data-filter="room" onclick="setFilter('room', event)">Sala</button>
         </div>
 
-        <div class="sync-status" id="syncStatus"></div>
+        <div class="sync-status" id="syncStatus">Preparando sincronización...</div>
 
         <div class="rooms-section" id="roomsContainer"></div>
 
@@ -511,43 +449,74 @@
         </div>
     </div>
 
-    <script>
-        // Configuración
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import {
+            getFirestore,
+            doc,
+            setDoc,
+            getDoc,
+            onSnapshot,
+            collection,
+            addDoc,
+            query,
+            orderBy,
+            limit,
+            runTransaction
+        } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
         const ROOMS = [
-            { name: 'Baño', className: 'baño' },
-            { name: 'Salón', className: 'salón' },
-            { name: 'Cocina', className: 'cocina' },
-            { name: 'Pasillo', className: 'pasillo' }
+            { name: 'Baño', className: 'baño', icon: 'B' },
+            { name: 'Salón', className: 'salón', icon: 'S' },
+            { name: 'Cocina', className: 'cocina', icon: 'C' },
+            { name: 'Pasillo', className: 'pasillo', icon: 'P' }
         ];
 
         const EXPIRY_DAYS = 7;
         const CONFIRM_TIMER = 3000;
-        
-        let currentFilter = 'date';
-        let timers = {};
-        let expiryTimers = {};
-        let isOnline = navigator.onLine;
+        const APP_SLUG = 'limpieza-app';
 
-        // Funciones de almacenamiento
+        const firebaseConfig = {
+        apiKey: "AIzaSyDZfCEfl0M2E0ISoWWk_MDxguGkDyT8HpM",
+        authDomain: "limpieza-f8ee7.firebaseapp.com",
+        projectId: "limpieza-f8ee7",
+        storageBucket: "limpieza-f8ee7.firebasestorage.app",
+        messagingSenderId: "7595784094",
+        appId: "1:7595784094:web:8c8d02b8b672eba20a088f"
+        };
+
+        let currentFilter = 'date';
+        let isOnline = navigator.onLine;
+        let syncBusy = false;
+        let countdownInterval = null;
+        const timers = {};
+        const roomState = {};
+        let historyState = [];
+
         function getCurrentDate() {
             const now = new Date();
             return now.toISOString().split('T')[0];
         }
 
-        function saveData(roomName, key, value) {
-            localStorage.setItem(`cleaning_${getCurrentDate()}_${roomName}_${key}`, value);
+        const DAY_KEY = getCurrentDate();
+
+        function hasFirebaseConfig() {
+            return firebaseConfig.apiKey !== 'PEGAR_AQUI_API_KEY' &&
+                   firebaseConfig.projectId !== 'PEGAR_AQUI_PROJECT_ID' &&
+                   firebaseConfig.appId !== 'PEGAR_AQUI_APP_ID';
         }
 
-        function getData(roomName, key) {
-            return localStorage.getItem(`cleaning_${getCurrentDate()}_${roomName}_${key}`) || '';
-        }
-
-        function getDataByDate(date, roomName, key) {
-            return localStorage.getItem(`cleaning_${date}_${roomName}_${key}`) || '';
+        function escapeHtml(text) {
+            return String(text ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         function isOverSevenDays(assignedDate) {
-            const assigned = new Date(assignedDate);
+            const assigned = new Date(assignedDate + 'T00:00:00');
             const now = new Date();
             const diffTime = now - assigned;
             const diffDays = diffTime / (1000 * 60 * 60 * 24);
@@ -559,10 +528,10 @@
             const now = new Date();
             const expiryDate = new Date(assigned);
             expiryDate.setDate(expiryDate.getDate() + EXPIRY_DAYS);
-            
+
             const diffTime = expiryDate - now;
             const diffDays = diffTime / (1000 * 60 * 60 * 24);
-            
+
             if (diffDays <= 0) return 'EXPIRADA';
             if (diffDays < 1) {
                 const hours = Math.ceil(diffDays * 24);
@@ -571,179 +540,278 @@
             return `${Math.floor(diffDays)}d`;
         }
 
-        function addToHistory(roomName, personName, isFailure = false) {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-            const dateStr = now.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-            
-            const historyItem = {
-                room: roomName,
-                person: personName,
-                time: timeStr,
-                date: dateStr,
-                timestamp: now.getTime(),
-                isFailure: isFailure
-            };
+        function setSyncIndicator(mode) {
+            const indicator = document.getElementById('syncIndicator');
+            indicator.classList.remove('syncing', 'error');
+            indicator.textContent = '✓';
 
-            let history = JSON.parse(localStorage.getItem('cleaning_history') || '[]');
-            history.unshift(historyItem);
-            history = history.slice(0, 100);
-            localStorage.setItem('cleaning_history', JSON.stringify(history));
+            if (mode === 'syncing') {
+                indicator.classList.add('syncing');
+                indicator.textContent = '↻';
+            }
 
-            renderHistory();
+            if (mode === 'error') {
+                indicator.classList.add('error');
+                indicator.textContent = '!';
+            }
         }
 
-        function setFilter(filter) {
+        function updateSyncStatus(customMessage = '') {
+            const status = document.getElementById('syncStatus');
+
+            if (customMessage) {
+                status.textContent = customMessage;
+                return;
+            }
+
+            if (!hasFirebaseConfig()) {
+                status.textContent = 'Falta configurar Firebase en este archivo';
+                setSyncIndicator('error');
+                return;
+            }
+
+            if (!isOnline) {
+                status.textContent = 'Sin conexión. Los cambios no se enviarán hasta volver a estar online.';
+                return;
+            }
+
+            if (syncBusy) {
+                status.textContent = 'Sincronizando con la nube...';
+                return;
+            }
+
+            status.textContent = `✓ Sincronizado en la nube · ${DAY_KEY}`;
+        }
+
+        function setFilter(filter, event) {
             currentFilter = filter;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                const btn = document.querySelector(`.filter-btn[data-filter="${filter}"]`);
+                if (btn) btn.classList.add('active');
+            }
             renderHistory();
         }
 
         function sortHistory(history) {
             const sorted = [...history];
-            
             if (currentFilter === 'date') {
-                sorted.sort((a, b) => b.timestamp - a.timestamp);
+                sorted.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             } else if (currentFilter === 'name') {
-                sorted.sort((a, b) => a.person.localeCompare(b.person));
+                sorted.sort((a, b) => (a.person || '').localeCompare(b.person || ''));
             } else if (currentFilter === 'room') {
-                sorted.sort((a, b) => a.room.localeCompare(b.room));
+                sorted.sort((a, b) => (a.room || '').localeCompare(b.room || ''));
             }
-            
             return sorted;
         }
 
         function renderHistory() {
             const historyContent = document.getElementById('historyContent');
-            let history = JSON.parse(localStorage.getItem('cleaning_history') || '[]');
-            
-            history = sortHistory(history);
+            const history = sortHistory(historyState);
 
-            if (history.length === 0) {
+            if (!history.length) {
                 historyContent.innerHTML = '<div class="history-empty">Sin eventos registrados</div>';
                 return;
             }
 
             historyContent.innerHTML = history.map(item => {
-                if (item.isFailure) {
-                    return `
-                        <div class="history-item history-item-failure">
-                            <div class="history-item-main">${item.person} ha fallado en limpiar ${item.room}</div>
-                            <div class="history-item-time">${item.date} a las ${item.time}</div>
-                        </div>
-                    `;
-                } else {
-                    return `
-                        <div class="history-item">
-                            <div class="history-item-main">${item.person} limpió ${item.room}</div>
-                            <div class="history-item-time">${item.date} a las ${item.time}</div>
-                        </div>
-                    `;
-                }
+                const mainText = item.isFailure
+                    ? `${escapeHtml(item.person)} ha fallado en limpiar ${escapeHtml(item.room)}`
+                    : `${escapeHtml(item.person)} limpió ${escapeHtml(item.room)}`;
+
+                return `
+                    <div class="history-item ${item.isFailure ? 'history-item-failure' : ''}">
+                        <div class="history-item-main">${mainText}</div>
+                        <div class="history-item-time">${escapeHtml(item.date)} a las ${escapeHtml(item.time)}</div>
+                    </div>
+                `;
             }).join('');
 
             historyContent.scrollTop = 0;
         }
 
-        function checkFailures() {
-            ROOMS.forEach(room => {
-                const assignedDate = getData(room.name, 'assigned_date');
-                const completedDate = getData(room.name, 'completed_date');
-                const failureReported = getData(room.name, 'failure_reported');
-                
-                if (assignedDate && !completedDate && !failureReported && isOverSevenDays(assignedDate)) {
-                    const personName = getData(room.name, 'person');
-                    if (personName) {
-                        addToHistory(room.name, personName, true);
-                        saveData(room.name, 'failure_reported', 'true');
-                    }
-                }
+        function getRoomDocRef(db, roomName) {
+            return doc(db, 'apps', APP_SLUG, 'days', DAY_KEY, 'rooms', roomName);
+        }
+
+        function getHistoryCollectionRef(db) {
+            return collection(db, 'apps', APP_SLUG, 'days', DAY_KEY, 'history');
+        }
+
+        function getDefaultRoomState() {
+            return {
+                person: '',
+                assigned_date: '',
+                completed_date: '',
+                failure_reported: false,
+                toggle: false,
+                toggle_started_at: 0,
+                updated_at: 0
+            };
+        }
+
+        let app = null;
+        let db = null;
+
+        async function saveRoomData(roomName, patch) {
+            if (!db) return;
+            syncBusy = true;
+            setSyncIndicator('syncing');
+            updateSyncStatus();
+
+            await setDoc(getRoomDocRef(db, roomName), {
+                ...patch,
+                updated_at: Date.now()
+            }, { merge: true });
+
+            syncBusy = false;
+            setSyncIndicator('default');
+            updateSyncStatus();
+        }
+
+        async function addToHistory(roomName, personName, isFailure = false) {
+            if (!db) return;
+            const now = new Date();
+
+            await addDoc(getHistoryCollectionRef(db), {
+                room: roomName,
+                person: personName,
+                time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+                date: now.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+                timestamp: now.getTime(),
+                isFailure
             });
         }
 
-        function confirmName(roomName) {
+        async function confirmName(roomName) {
             const input = document.getElementById(`input_${roomName}`);
             const personName = input.value.trim();
-            
+
             if (!personName) {
                 input.focus();
                 return;
             }
 
-            saveData(roomName, 'person', personName);
-            saveData(roomName, 'assigned_date', getCurrentDate());
-            
-            input.value = '';
-            renderRooms();
+            try {
+                await saveRoomData(roomName, {
+                    person: personName,
+                    assigned_date: DAY_KEY,
+                    completed_date: '',
+                    failure_reported: false,
+                    toggle: false,
+                    toggle_started_at: 0
+                });
+            } catch (error) {
+                console.error(error);
+                setSyncIndicator('error');
+                updateSyncStatus('Error al guardar en Firestore');
+            }
         }
 
-        function toggleRoom(roomName) {
-            const personInput = document.getElementById(`input_${roomName}`);
-            const toggle = document.getElementById(`toggle_${roomName}`);
-            const personName = personInput.value.trim();
+        async function toggleRoom(roomName) {
+            const state = roomState[roomName] || getDefaultRoomState();
+            const personName = (state.person || '').trim();
+            const input = document.getElementById(`input_${roomName}`);
 
             if (!personName) {
-                personInput.focus();
+                if (input) input.focus();
                 return;
             }
 
-            toggle.classList.add('active');
             clearTimeout(timers[roomName]);
 
-            timers[roomName] = setTimeout(() => {
-                addToHistory(roomName, personName);
-                
-                personInput.value = '';
-                toggle.classList.remove('active');
+            try {
+                await saveRoomData(roomName, {
+                    toggle: true,
+                    toggle_started_at: Date.now()
+                });
 
-                saveData(roomName, 'person', '');
-                saveData(roomName, 'toggle', 'false');
-                saveData(roomName, 'completed_date', getCurrentDate());
-                saveData(roomName, 'assigned_date', '');
-            }, CONFIRM_TIMER);
+                timers[roomName] = setTimeout(async () => {
+                    try {
+                        await addToHistory(roomName, personName, false);
+                        await saveRoomData(roomName, {
+                            person: '',
+                            toggle: false,
+                            toggle_started_at: 0,
+                            completed_date: DAY_KEY,
+                            assigned_date: ''
+                        });
+                    } catch (error) {
+                        console.error(error);
+                        setSyncIndicator('error');
+                        updateSyncStatus('Error al completar la tarea');
+                    }
+                }, CONFIRM_TIMER);
+            } catch (error) {
+                console.error(error);
+                setSyncIndicator('error');
+                updateSyncStatus('Error al cambiar el estado');
+            }
+        }
 
-            saveData(roomName, 'toggle', 'true');
+        async function reportFailureIfNeeded(roomName) {
+            if (!db) return;
+            const roomRef = getRoomDocRef(db, roomName);
+
+            try {
+                const result = await runTransaction(db, async (transaction) => {
+                    const snap = await transaction.get(roomRef);
+                    if (!snap.exists()) return null;
+
+                    const data = snap.data();
+                    if (!data.assigned_date || data.completed_date || data.failure_reported || !isOverSevenDays(data.assigned_date) || !data.person) {
+                        return null;
+                    }
+
+                    transaction.set(roomRef, {
+                        failure_reported: true,
+                        updated_at: Date.now()
+                    }, { merge: true });
+
+                    return { person: data.person };
+                });
+
+                if (result && result.person) {
+                    await addToHistory(roomName, result.person, true);
+                }
+            } catch (error) {
+                console.error(error);
+            }
         }
 
         function updateExpiryBadge(roomName) {
-            const assignedDate = getData(roomName, 'assigned_date');
-            const completedDate = getData(roomName, 'completed_date');
+            const state = roomState[roomName] || getDefaultRoomState();
             const badge = document.getElementById(`expiry_${roomName}`);
-            
             if (!badge) return;
-            
-            if (assignedDate && !completedDate) {
-                const remaining = getDaysRemaining(assignedDate);
+
+            if (state.assigned_date && !state.completed_date) {
+                const remaining = getDaysRemaining(state.assigned_date);
                 badge.textContent = remaining;
+                badge.style.display = 'flex';
                 badge.className = 'expiry-badge' + (remaining === 'EXPIRADA' ? ' expired' : '');
             } else {
                 badge.style.display = 'none';
             }
         }
 
-        function startExpiryUpdater(roomName) {
-            clearInterval(expiryTimers[roomName]);
-            updateExpiryBadge(roomName);
-            
-            expiryTimers[roomName] = setInterval(() => {
-                updateExpiryBadge(roomName);
-            }, 60000);
-        }
+        function refreshTimers() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
 
-        function startTimerDisplay(roomName) {
-            let timeLeft = 3;
-            const timerElement = document.getElementById(`timer_${roomName}`);
+            countdownInterval = setInterval(() => {
+                ROOMS.forEach(room => {
+                    const state = roomState[room.name] || getDefaultRoomState();
+                    const timerElement = document.getElementById(`timer_${room.name}`);
+                    if (!timerElement || !state.toggle || !state.toggle_started_at) return;
 
-            const interval = setInterval(() => {
-                timeLeft--;
-                if (timerElement) {
-                    timerElement.textContent = timeLeft;
-                }
-                if (timeLeft <= 0) {
-                    clearInterval(interval);
-                }
-            }, 1000);
+                    const elapsed = Math.floor((Date.now() - state.toggle_started_at) / 1000);
+                    const remaining = Math.max(0, CONFIRM_TIMER / 1000 - elapsed);
+                    timerElement.textContent = remaining;
+                });
+            }, 250);
         }
 
         function renderRooms() {
@@ -754,90 +822,148 @@
             group.className = 'room-group';
 
             ROOMS.forEach(room => {
-                const personName = getData(room.name, 'person');
-                const isActive = getData(room.name, 'toggle') === 'true';
-                const assignedDate = getData(room.name, 'assigned_date');
+                const state = roomState[room.name] || getDefaultRoomState();
+                const showExpiry = state.assigned_date && !state.completed_date;
+                const showTimer = state.toggle && state.toggle_started_at;
+                const safeValue = escapeHtml(state.person || '');
 
                 const row = document.createElement('div');
                 row.className = 'room-item';
-
                 row.innerHTML = `
-                    <div class="room-icon ${room.className}">B</div>
+                    <div class="room-icon ${room.className}">${room.icon}</div>
                     <div class="room-info">
                         <div class="room-label">${room.name}</div>
                         <div class="room-input-wrapper">
-                            <input 
-                                type="text" 
-                                class="room-input" 
+                            <input
+                                type="text"
+                                class="room-input"
                                 id="input_${room.name}"
                                 placeholder="Asignado a"
-                                value="${personName}"
-                                onchange="saveData('${room.name}', 'person', this.value)"
+                                value="${safeValue}"
                             >
-                            <button class="confirm-btn" onclick="confirmName('${room.name}')">OK</button>
+                            <button class="confirm-btn" onclick="window.confirmName('${room.name}')">OK</button>
                         </div>
                     </div>
                     <div class="room-controls">
-                        ${assignedDate && !getData(room.name, 'completed_date') ? `<div class="expiry-badge" id="expiry_${room.name}"></div>` : ''}
-                        ${isActive ? `<div class="timer-badge" id="timer_${room.name}">3</div>` : ''}
-                        <button 
-                            class="toggle-switch ${isActive ? 'active' : ''}" 
+                        ${showExpiry ? `<div class="expiry-badge" id="expiry_${room.name}"></div>` : ''}
+                        ${showTimer ? `<div class="timer-badge" id="timer_${room.name}">3</div>` : ''}
+                        <button
+                            class="toggle-switch ${showTimer ? 'active' : ''}"
                             id="toggle_${room.name}"
-                            onclick="toggleRoom('${room.name}')"
+                            onclick="window.toggleRoom('${room.name}')"
                         ></button>
                     </div>
                 `;
 
                 group.appendChild(row);
-
-                if (assignedDate) {
-                    startExpiryUpdater(room.name);
-                }
             });
 
             container.appendChild(group);
 
             ROOMS.forEach(room => {
-                if (getData(room.name, 'toggle') === 'true') {
-                    startTimerDisplay(room.name);
+                const input = document.getElementById(`input_${room.name}`);
+                if (input) {
+                    input.addEventListener('keydown', (ev) => {
+                        if (ev.key === 'Enter') {
+                            ev.preventDefault();
+                            window.confirmName(room.name);
+                        }
+                    });
                 }
+                updateExpiryBadge(room.name);
+            });
+
+            refreshTimers();
+        }
+
+        function startRealtimeListeners() {
+            ROOMS.forEach(room => {
+                onSnapshot(getRoomDocRef(db, room.name), (snap) => {
+                    roomState[room.name] = snap.exists()
+                        ? { ...getDefaultRoomState(), ...snap.data() }
+                        : getDefaultRoomState();
+                    renderRooms();
+                    reportFailureIfNeeded(room.name);
+                }, (error) => {
+                    console.error(error);
+                    setSyncIndicator('error');
+                    updateSyncStatus('No se pudo leer el estado de Firestore');
+                });
+            });
+
+            const historyQuery = query(getHistoryCollectionRef(db), orderBy('timestamp', 'desc'), limit(100));
+            onSnapshot(historyQuery, (snapshot) => {
+                historyState = snapshot.docs.map(docItem => docItem.data());
+                renderHistory();
+            }, (error) => {
+                console.error(error);
+                setSyncIndicator('error');
+                updateSyncStatus('No se pudo leer el historial de Firestore');
             });
         }
 
-        function updateSyncStatus() {
-            const status = document.getElementById('syncStatus');
-            if (isOnline) {
-                status.textContent = '✓ Sincronizado en la nube';
-            } else {
-                status.textContent = '⚠ Modo offline - Los cambios se sincronizarán cuando haya conexión';
+        async function ensureRoomDocsExist() {
+            for (const room of ROOMS) {
+                const ref = getRoomDocRef(db, room.name);
+                const snap = await getDoc(ref);
+                if (!snap.exists()) {
+                    await setDoc(ref, getDefaultRoomState(), { merge: true });
+                }
             }
         }
 
-        // Event listeners
         window.addEventListener('online', () => {
             isOnline = true;
+            setSyncIndicator('default');
             updateSyncStatus();
-            document.getElementById('syncIndicator').classList.remove('syncing');
         });
 
         window.addEventListener('offline', () => {
             isOnline = false;
             updateSyncStatus();
-            document.getElementById('syncIndicator').classList.add('syncing');
         });
 
         document.getElementById('syncIndicator').addEventListener('click', () => {
-            document.getElementById('syncIndicator').classList.add('syncing');
-            setTimeout(() => {
-                document.getElementById('syncIndicator').classList.remove('syncing');
-            }, 2000);
+            updateSyncStatus();
+            renderRooms();
+            renderHistory();
         });
 
-        // Inicializar
-        checkFailures();
-        renderRooms();
-        renderHistory();
-        updateSyncStatus();
+        window.setFilter = setFilter;
+        window.confirmName = confirmName;
+        window.toggleRoom = toggleRoom;
+
+        async function init() {
+            renderRooms();
+            renderHistory();
+            updateSyncStatus();
+
+            if (!hasFirebaseConfig()) {
+                return;
+            }
+
+            try {
+                syncBusy = true;
+                setSyncIndicator('syncing');
+                updateSyncStatus();
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                await ensureRoomDocsExist();
+                startRealtimeListeners();
+
+                syncBusy = false;
+                setSyncIndicator('default');
+                updateSyncStatus();
+            } catch (error) {
+                console.error(error);
+                syncBusy = false;
+                setSyncIndicator('error');
+                updateSyncStatus('Error al iniciar Firebase/Firestore');
+            }
+        }
+
+        init();
     </script>
 </body>
 </html>
