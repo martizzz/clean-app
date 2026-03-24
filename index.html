@@ -476,28 +476,28 @@
 
         body.android-pixel {
             font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            --bg-primary: #F6F8F3;
-            --bg-secondary: #FFFFFF;
-            --separator: #E2E6DC;
-            --text-primary: #1F1F1F;
-            --text-secondary: #4A4F45;
-            --text-tertiary: #6B7366;
-            --blue: #1A73E8;
-            --green: #34A853;
-            --orange: #FB8C00;
-            --purple: #8E24AA;
-            --cyan: #1E88E5;
-            --yellow: #F9E7A9;
+            --bg-primary: #121212;
+            --bg-secondary: #2B2B2F;
+            --separator: #3A3A3F;
+            --text-primary: #F3F4F6;
+            --text-secondary: #D6D7DA;
+            --text-tertiary: #A9ABB3;
+            --blue: #8AB4F8;
+            --green: #81C995;
+            --orange: #F6A44D;
+            --purple: #C58AF9;
+            --cyan: #76D1FF;
+            --yellow: #F6C453;
+            --red: #FF8A80;
         }
 
         body.android-pixel {
-            background:
-                radial-gradient(circle at top right, rgba(153, 210, 73, 0.16), transparent 28%),
-                linear-gradient(180deg, #F6F8F3 0%, #EDF3E6 100%);
+            background: #121212;
+            color: var(--text-primary);
         }
 
         body.android-pixel .status-bar {
-            background: rgba(246, 248, 243, 0.92);
+            background: rgba(18, 18, 18, 0.96);
             backdrop-filter: blur(10px);
             border-bottom: none;
         }
@@ -520,68 +520,97 @@
         body.android-pixel .header {
             padding-top: 20px;
             padding-bottom: 14px;
+            background: transparent;
         }
 
         body.android-pixel .header h1 {
             font-size: 34px;
             font-weight: 700;
             letter-spacing: -0.3px;
+            color: #F3F4F6;
         }
 
         body.android-pixel .sync-indicator {
             width: 28px;
             height: 28px;
-            box-shadow: 0 6px 16px rgba(52, 168, 83, 0.2);
+            box-shadow: none;
+            background: #2E7D32;
         }
 
         body.android-pixel .filters-section {
             gap: 10px;
             border-bottom: none;
+            background: transparent;
         }
 
         body.android-pixel .filter-btn {
             min-height: 36px;
             padding: 8px 14px;
             border-radius: 18px;
-            border: 1px solid #D5DCCE;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            border: 1px solid #4A4D56;
+            background: #1B1B1F;
+            color: #D6D7DA;
+            box-shadow: none;
         }
 
         body.android-pixel .filter-btn.active {
-            box-shadow: 0 8px 18px rgba(26, 115, 232, 0.18);
+            background: #2D3B54;
+            border-color: #51647F;
+            color: #E8F0FE;
+            box-shadow: none;
         }
 
         body.android-pixel .help-dropdown,
         body.android-pixel .room-group,
         body.android-pixel .history-card {
-            border-radius: 24px;
-            box-shadow: 0 8px 24px rgba(70, 90, 60, 0.08);
+            border-radius: 28px;
+            background: #2B2B2F;
+            box-shadow: none;
+            overflow: hidden;
         }
 
         body.android-pixel .help-summary,
         body.android-pixel .sync-status {
-            background: rgba(255, 255, 255, 0.72);
+            background: #1B1B1F;
+            color: #B8BBC3;
+            border: 1px solid #303136;
+            border-radius: 22px;
+        }
+
+        body.android-pixel .help-content {
+            background: #2B2B2F;
+            color: #D6D7DA;
         }
 
         body.android-pixel .room-item {
-            min-height: 68px;
-            padding: 14px 18px;
+            min-height: 76px;
+            padding: 16px 18px;
+            background: #2B2B2F;
+            border-bottom: 1px solid #1C1C21;
         }
 
         body.android-pixel .room-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 12px;
-            font-size: 19px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            font-size: 20px;
+            color: #1B1B1F;
+            font-weight: 700;
         }
 
         body.android-pixel .room-label {
             font-weight: 600;
             margin-bottom: 5px;
+            color: #F3F4F6;
         }
 
         body.android-pixel .room-input {
             font-size: 15px;
+            color: #C6C9D0;
+        }
+
+        body.android-pixel .room-input::placeholder {
+            color: #8E939E;
         }
 
         body.android-pixel .confirm-btn {
@@ -589,40 +618,71 @@
             height: 32px;
             border-radius: 16px;
             font-weight: 700;
-            box-shadow: 0 6px 16px rgba(26, 115, 232, 0.2);
+            box-shadow: none;
+            background: #8AB4F8;
+            color: #10233F;
         }
 
         body.android-pixel .expiry-badge {
             width: 48px;
             height: 30px;
             border-radius: 15px;
-            background: #F7E7A3;
-            color: #5F5200;
+            background: #4A3F14;
+            color: #F7E28C;
+        }
+
+        body.android-pixel .expiry-badge.expired {
+            background: #4B2020;
+            color: #FFB4AB;
         }
 
         body.android-pixel .timer-badge {
             width: 30px;
             height: 30px;
+            background: #3A3E46;
+            color: #E8EAED;
         }
 
         body.android-pixel .toggle-switch {
             width: 52px;
             height: 32px;
             border-radius: 16px;
-            background: #CDD4C7;
+            background: #61656E;
+        }
+
+        body.android-pixel .toggle-switch.active {
+            background: #81C995;
         }
 
         body.android-pixel .toggle-switch::before {
             width: 28px;
             height: 28px;
+            background: #F1F3F4;
         }
 
         body.android-pixel .toggle-switch.active::before {
             transform: translateX(20px);
+            background: #0F2D18;
         }
 
         body.android-pixel .history-title {
-            background: rgba(255, 255, 255, 0.78);
+            background: #2B2B2F;
+            color: #B8BBC3;
+            border-bottom: 1px solid #1C1C21;
+        }
+
+        body.android-pixel .history-item {
+            background: #2B2B2F;
+            border-bottom: 1px solid #1C1C21;
+        }
+
+        body.android-pixel .history-item-main {
+            color: #F3F4F6;
+        }
+
+        body.android-pixel .history-item-time,
+        body.android-pixel .history-empty {
+            color: #A9ABB3;
         }
 
         @media (max-width: 480px) {
