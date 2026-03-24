@@ -192,6 +192,12 @@
             min-width: 0;
         }
 
+        .room-item.has-text .confirm-btn {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
         .room-label {
             font-size: 16px;
             font-weight: 500;
@@ -222,7 +228,9 @@
         }
 
         .confirm-btn {
-            padding: 6px 10px;
+            min-width: 38px;
+            height: 30px;
+            padding: 0 10px;
             background: var(--blue);
             color: white;
             border: none;
@@ -235,13 +243,13 @@
             opacity: 0;
             pointer-events: none;
             transform: scale(0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            align-self: center;
+            line-height: 1;
         }
 
-        .room-input:not(:placeholder-shown) ~ .confirm-btn {
-            opacity: 1;
-            pointer-events: auto;
-            transform: scale(1);
-        }
 
         .confirm-btn:active {
             opacity: 0.7;
@@ -252,6 +260,10 @@
             align-items: center;
             gap: 12px;
             flex-shrink: 0;
+        }
+
+        .room-controls .confirm-btn {
+            align-self: center;
         }
 
         .expiry-badge {
@@ -398,6 +410,54 @@
             background: var(--bg-primary);
         }
 
+        .info-section {
+            padding: 8px 20px 0;
+            background: var(--bg-primary);
+        }
+
+        .help-dropdown {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .help-summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .help-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .help-summary::after {
+            content: '▾';
+            font-size: 14px;
+            color: var(--text-tertiary);
+            transition: transform 0.2s ease;
+        }
+
+        .help-dropdown[open] .help-summary::after {
+            transform: rotate(180deg);
+        }
+
+        .help-content {
+            padding: 0 16px 14px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--separator);
+        }
+
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
@@ -429,15 +489,23 @@
             <div class="sync-indicator" id="syncIndicator" title="Sincronización">✓</div>
         </div>
 
-        <div class="filters-section">
+        <div class="info-section">
+            <details class="help-dropdown">
+                <summary class="help-summary">Cómo funciona</summary>
+                <div class="help-content">
+                    Escribe el nombre de la persona que va a limpiar en el espacio correspondiente y pulsa <strong>OK</strong>. Cuando termine de limpiar, activa el botón y espera <strong>4 segundos</strong> para confirmar la tarea. Si pasan <strong>7 días</strong> desde la asignación y no se ha limpiado, contará como falta y el Duende te castiga.
+                </div>
+            </details>
+            <div class="sync-status" id="syncStatus">Preparando sincronización...</div>
+        </div>
+
+        <div class="rooms-section" id="roomsContainer"></div>
+
+<div class="filters-section">
             <button class="filter-btn active" data-filter="date" onclick="setFilter('date', event)">Fecha</button>
             <button class="filter-btn" data-filter="name" onclick="setFilter('name', event)">Nombre</button>
             <button class="filter-btn" data-filter="room" onclick="setFilter('room', event)">Sala</button>
         </div>
-
-        <div class="sync-status" id="syncStatus">Preparando sincronización...</div>
-
-        <div class="rooms-section" id="roomsContainer"></div>
 
         <div class="history-section">
             <div class="history-card">
@@ -473,7 +541,7 @@
         ];
 
         const EXPIRY_DAYS = 7;
-        const CONFIRM_TIMER = 3000;
+        const CONFIRM_TIMER = 4000;
         const APP_SLUG = 'limpieza-app';
 
        const firebaseConfig = {
@@ -870,6 +938,11 @@
                             ev.preventDefault();
                             window.confirmName(room.name);
                         }
+                    });
+                    input.addEventListener('input', () => {
+                        const row = input.closest('.room-item');
+                        if (!row) return;
+                        row.classList.toggle('has-text', input.value.trim().length > 0);
                     });
                 }
                 updateExpiryBadge(room.name);
