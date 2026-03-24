@@ -500,10 +500,13 @@
         const DAY_KEY = getCurrentDate();
 
         function hasFirebaseConfig() {
-            return firebaseConfig.apiKey !== 'AIzaSyDZfCEfl0M2E0ISoWWk_MDxguGkDyT8HpM' &&
-                   firebaseConfig.projectId !== 'limpieza-f8ee7' &&
-                   firebaseConfig.appId !== '1:7595784094:web:8c8d02b8b672eba20a088f';
-        }
+    return !!(
+        firebaseConfig.apiKey &&
+        firebaseConfig.authDomain &&
+        firebaseConfig.projectId &&
+        firebaseConfig.appId
+    );
+}
 
         function escapeHtml(text) {
             return String(text ?? '')
