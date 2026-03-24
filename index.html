@@ -472,6 +472,159 @@
         .history-content::-webkit-scrollbar-track { background: transparent; }
         .history-content::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 2px; }
 
+
+
+        body.android-pixel {
+            font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            --bg-primary: #F6F8F3;
+            --bg-secondary: #FFFFFF;
+            --separator: #E2E6DC;
+            --text-primary: #1F1F1F;
+            --text-secondary: #4A4F45;
+            --text-tertiary: #6B7366;
+            --blue: #1A73E8;
+            --green: #34A853;
+            --orange: #FB8C00;
+            --purple: #8E24AA;
+            --cyan: #1E88E5;
+            --yellow: #F9E7A9;
+        }
+
+        body.android-pixel {
+            background:
+                radial-gradient(circle at top right, rgba(153, 210, 73, 0.16), transparent 28%),
+                linear-gradient(180deg, #F6F8F3 0%, #EDF3E6 100%);
+        }
+
+        body.android-pixel .status-bar {
+            background: rgba(246, 248, 243, 0.92);
+            backdrop-filter: blur(10px);
+            border-bottom: none;
+        }
+
+        body.android-pixel .container {
+            max-width: 520px;
+            padding-top: 52px;
+            padding-bottom: 72px;
+        }
+
+        body.android-pixel .header,
+        body.android-pixel .filters-section,
+        body.android-pixel .info-section,
+        body.android-pixel .rooms-section,
+        body.android-pixel .history-section {
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+
+        body.android-pixel .header {
+            padding-top: 20px;
+            padding-bottom: 14px;
+        }
+
+        body.android-pixel .header h1 {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        body.android-pixel .sync-indicator {
+            width: 28px;
+            height: 28px;
+            box-shadow: 0 6px 16px rgba(52, 168, 83, 0.2);
+        }
+
+        body.android-pixel .filters-section {
+            gap: 10px;
+            border-bottom: none;
+        }
+
+        body.android-pixel .filter-btn {
+            min-height: 36px;
+            padding: 8px 14px;
+            border-radius: 18px;
+            border: 1px solid #D5DCCE;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        body.android-pixel .filter-btn.active {
+            box-shadow: 0 8px 18px rgba(26, 115, 232, 0.18);
+        }
+
+        body.android-pixel .help-dropdown,
+        body.android-pixel .room-group,
+        body.android-pixel .history-card {
+            border-radius: 24px;
+            box-shadow: 0 8px 24px rgba(70, 90, 60, 0.08);
+        }
+
+        body.android-pixel .help-summary,
+        body.android-pixel .sync-status {
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        body.android-pixel .room-item {
+            min-height: 68px;
+            padding: 14px 18px;
+        }
+
+        body.android-pixel .room-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            font-size: 19px;
+        }
+
+        body.android-pixel .room-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        body.android-pixel .room-input {
+            font-size: 15px;
+        }
+
+        body.android-pixel .confirm-btn {
+            min-width: 44px;
+            height: 32px;
+            border-radius: 16px;
+            font-weight: 700;
+            box-shadow: 0 6px 16px rgba(26, 115, 232, 0.2);
+        }
+
+        body.android-pixel .expiry-badge {
+            width: 48px;
+            height: 30px;
+            border-radius: 15px;
+            background: #F7E7A3;
+            color: #5F5200;
+        }
+
+        body.android-pixel .timer-badge {
+            width: 30px;
+            height: 30px;
+        }
+
+        body.android-pixel .toggle-switch {
+            width: 52px;
+            height: 32px;
+            border-radius: 16px;
+            background: #CDD4C7;
+        }
+
+        body.android-pixel .toggle-switch::before {
+            width: 28px;
+            height: 28px;
+        }
+
+        body.android-pixel .toggle-switch.active::before {
+            transform: translateX(20px);
+        }
+
+        body.android-pixel .history-title {
+            background: rgba(255, 255, 255, 0.78);
+        }
+
         @media (max-width: 480px) {
             .header h1 { font-size: 28px; }
             .room-label { font-size: 15px; }
@@ -489,6 +642,12 @@
             <div class="sync-indicator" id="syncIndicator" title="Sincronización">✓</div>
         </div>
 
+        <div class="filters-section">
+            <button class="filter-btn active" data-filter="date" onclick="setFilter('date', event)">Fecha</button>
+            <button class="filter-btn" data-filter="name" onclick="setFilter('name', event)">Nombre</button>
+            <button class="filter-btn" data-filter="room" onclick="setFilter('room', event)">Sala</button>
+        </div>
+
         <div class="info-section">
             <details class="help-dropdown">
                 <summary class="help-summary">Cómo funciona</summary>
@@ -500,12 +659,6 @@
         </div>
 
         <div class="rooms-section" id="roomsContainer"></div>
-
-<div class="filters-section">
-            <button class="filter-btn active" data-filter="date" onclick="setFilter('date', event)">Fecha</button>
-            <button class="filter-btn" data-filter="name" onclick="setFilter('name', event)">Nombre</button>
-            <button class="filter-btn" data-filter="room" onclick="setFilter('room', event)">Sala</button>
-        </div>
 
         <div class="history-section">
             <div class="history-card">
@@ -1008,6 +1161,13 @@
         window.confirmName = confirmName;
         window.toggleRoom = toggleRoom;
 
+
+        function applyAndroidPixelTheme() {
+            const ua = navigator.userAgent || '';
+            const isAndroid = /Android/i.test(ua);
+            document.body.classList.toggle('android-pixel', isAndroid);
+        }
+
         async function init() {
             renderRooms();
             renderHistory();
@@ -1038,6 +1198,7 @@
             }
         }
 
+        applyAndroidPixelTheme();
         init();
     </script>
 </body>
