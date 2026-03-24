@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpieza</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #F2F2F7;
+            --bg-secondary: #FFFFFF;
+            --separator: #E5E5EA;
+            --text-primary: #000000;
+            --text-secondary: #3C3C43;
+            --text-tertiary: #8E8E93;
+            --blue: #007AFF;
+            --green: #34C759;
+            --red: #FF3B30;
+            --orange: #FF9500;
+            --yellow: #FFCC00;
+            --purple: #AF52DE;
+            --cyan: #32B5F6;
+            --pink: #FF2D55;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -webkit-user-select: none;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 450px;
+            margin: 0 auto;
+            padding-top: 44px;
+            padding-bottom: 60px;
+        }
+
+        .status-bar {
+            height: 44px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            padding: 16px 20px 12px;
+            background: var(--bg-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .sync-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sync-indicator.syncing {
+            animation: spin 1s linear infinite;
+            background: var(--blue);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .filters-section {
+            padding: 12px 20px;
+            background: var(--bg-primary);
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--separator);
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: var(--blue);
+            color: white;
+            border-color: var(--blue);
+        }
+
+        .filter-btn:active {
+            opacity: 0.7;
+        }
+
+        .rooms-section {
+            padding: 16px 20px;
+            margin-bottom: 24px;
+        }
+
+        .room-group {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .room-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            min-height: 56px;
+            border-bottom: 1px solid var(--separator);
+            gap: 12px;
+            position: relative;
+        }
+
+        .room-item:last-child {
+            border-bottom: none;
+        }
+
+        .room-item:active {
+            background: var(--bg-primary);
+        }
+
+        .room-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            font-weight: 600;
+            color: white;
+        }
+
+        .room-icon.baño {
+            background: var(--cyan);
+        }
+
+        .room-icon.salón {
+            background: var(--purple);
+        }
+
+        .room-icon.cocina {
+            background: var(--orange);
+        }
+
+        .room-icon.pasillo {
+            background: var(--green);
+        }
+
+        .room-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .room-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 3px;
+        }
+
+        .room-input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .room-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            color: var(--text-tertiary);
+            font-family: inherit;
+            padding: 0;
+            outline: none;
+            min-width: 0;
+        }
+
+        .room-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .confirm-btn {
+            padding: 6px 10px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+
+        .room-input:not(:placeholder-shown) ~ .confirm-btn {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        .confirm-btn:active {
+            opacity: 0.7;
+        }
+
+        .room-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .expiry-badge {
+            width: 44px;
+            height: 28px;
+            border-radius: 6px;
+            background: #FFF3CD;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: #856404;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .expiry-badge.expired {
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--red);
+        }
+
+        .timer-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #E5E5EA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            animation: pulse 1s infinite;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 49px;
+            height: 29px;
+            background: #D1D1D6;
+            border-radius: 14.5px;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+            transition: background-color 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch.active {
+            background: var(--green);
+        }
+
+        .toggle-switch::before {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        .toggle-switch.active::before {
+            transform: translateX(20px);
+        }
+
+        .history-section {
+            padding: 0 20px;
+            margin-bottom: 24px;
+        }
+
+        .history-card {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .history-title {
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .history-content {
+            max-height: 320px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .history-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--separator);
+            font-size: 15px;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-item-main {
+            color: var(--text-primary);
+            font-weight: 400;
+            margin-bottom: 3px;
+        }
+
+        .history-item-time {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .history-item-failure {
+            background: rgba(255, 59, 48, 0.05);
+            border-left: 3px solid var(--red);
+        }
+
+        .history-item-failure .history-item-main {
+            color: var(--red);
+            font-weight: 500;
+        }
+
+        .history-empty {
+            padding: 32px 16px;
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 15px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--text-tertiary);
+            border-radius: 50%;
+            animation: blink 1.4s infinite;
+        }
+
+        .loading:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .history-content::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .history-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .history-content::-webkit-scrollbar-thumb {
+            background: #D1D1D6;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .room-label {
+                font-size: 15px;
+            }
+
+            .confirm-btn {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+
+            .expiry-badge {
+                width: 40px;
+                height: 26px;
+                font-size: 10px;
+            }
+        }
+
+        .sync-status {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            text-align: center;
+            padding: 8px;
+            background: var(--bg-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="status-bar"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Limpieza</h1>
+            <div class="sync-indicator" id="syncIndicator" title="Sincronizar">✓</div>
+        </div>
+
+        <div class="filters-section">
+            <button class="filter-btn active" onclick="setFilter('date')">Fecha</button>
+            <button class="filter-btn" onclick="setFilter('name')">Nombre</button>
+            <button class="filter-btn" onclick="setFilter('room')">Sala</button>
+        </div>
+
+        <div class="sync-status" id="syncStatus"></div>
+
+        <div class="rooms-section" id="roomsContainer"></div>
+
+        <div class="history-section">
+            <div class="history-card">
+                <div class="history-title">Historial</div>
+                <div class="history-content" id="historyContent">
+                    <div class="history-empty">Sin eventos registrados</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración
+        const ROOMS = [
+            { name: 'Baño', className: 'baño' },
+            { name: 'Salón', className: 'salón' },
+            { name: 'Cocina', className: 'cocina' },
+            { name: 'Pasillo', className: 'pasillo' }
+        ];
+
+        const EXPIRY_DAYS = 7;
+        const CONFIRM_TIMER = 3000;
+        
+        let currentFilter = 'date';
+        let timers = {};
+        let expiryTimers = {};
+        let isOnline = navigator.onLine;
+
+        // Funciones de almacenamiento
+        function getCurrentDate() {
+            const now = new Date();
+            return now.toISOString().split('T')[0];
+        }
+
+        function saveData(roomName, key, value) {
+            localStorage.setItem(`cleaning_${getCurrentDate()}_${roomName}_${key}`, value);
+        }
+
+        function getData(roomName, key) {
+            return localStorage.getItem(`cleaning_${getCurrentDate()}_${roomName}_${key}`) || '';
+        }
+
+        function getDataByDate(date, roomName, key) {
+            return localStorage.getItem(`cleaning_${date}_${roomName}_${key}`) || '';
+        }
+
+        function isOverSevenDays(assignedDate) {
+            const assigned = new Date(assignedDate);
+            const now = new Date();
+            const diffTime = now - assigned;
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            return diffDays >= EXPIRY_DAYS;
+        }
+
+        function getDaysRemaining(assignedDate) {
+            const assigned = new Date(assignedDate + 'T00:00:00');
+            const now = new Date();
+            const expiryDate = new Date(assigned);
+            expiryDate.setDate(expiryDate.getDate() + EXPIRY_DAYS);
+            
+            const diffTime = expiryDate - now;
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            
+            if (diffDays <= 0) return 'EXPIRADA';
+            if (diffDays < 1) {
+                const hours = Math.ceil(diffDays * 24);
+                return `${hours}h`;
+            }
+            return `${Math.floor(diffDays)}d`;
+        }
+
+        function addToHistory(roomName, personName, isFailure = false) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+            
+            const historyItem = {
+                room: roomName,
+                person: personName,
+                time: timeStr,
+                date: dateStr,
+                timestamp: now.getTime(),
+                isFailure: isFailure
+            };
+
+            let history = JSON.parse(localStorage.getItem('cleaning_history') || '[]');
+            history.unshift(historyItem);
+            history = history.slice(0, 100);
+            localStorage.setItem('cleaning_history', JSON.stringify(history));
+
+            renderHistory();
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderHistory();
+        }
+
+        function sortHistory(history) {
+            const sorted = [...history];
+            
+            if (currentFilter === 'date') {
+                sorted.sort((a, b) => b.timestamp - a.timestamp);
+            } else if (currentFilter === 'name') {
+                sorted.sort((a, b) => a.person.localeCompare(b.person));
+            } else if (currentFilter === 'room') {
+                sorted.sort((a, b) => a.room.localeCompare(b.room));
+            }
+            
+            return sorted;
+        }
+
+        function renderHistory() {
+            const historyContent = document.getElementById('historyContent');
+            let history = JSON.parse(localStorage.getItem('cleaning_history') || '[]');
+            
+            history = sortHistory(history);
+
+            if (history.length === 0) {
+                historyContent.innerHTML = '<div class="history-empty">Sin eventos registrados</div>';
+                return;
+            }
+
+            historyContent.innerHTML = history.map(item => {
+                if (item.isFailure) {
+                    return `
+                        <div class="history-item history-item-failure">
+                            <div class="history-item-main">${item.person} ha fallado en limpiar ${item.room}</div>
+                            <div class="history-item-time">${item.date} a las ${item.time}</div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="history-item">
+                            <div class="history-item-main">${item.person} limpió ${item.room}</div>
+                            <div class="history-item-time">${item.date} a las ${item.time}</div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            historyContent.scrollTop = 0;
+        }
+
+        function checkFailures() {
+            ROOMS.forEach(room => {
+                const assignedDate = getData(room.name, 'assigned_date');
+                const completedDate = getData(room.name, 'completed_date');
+                const failureReported = getData(room.name, 'failure_reported');
+                
+                if (assignedDate && !completedDate && !failureReported && isOverSevenDays(assignedDate)) {
+                    const personName = getData(room.name, 'person');
+                    if (personName) {
+                        addToHistory(room.name, personName, true);
+                        saveData(room.name, 'failure_reported', 'true');
+                    }
+                }
+            });
+        }
+
+        function confirmName(roomName) {
+            const input = document.getElementById(`input_${roomName}`);
+            const personName = input.value.trim();
+            
+            if (!personName) {
+                input.focus();
+                return;
+            }
+
+            saveData(roomName, 'person', personName);
+            saveData(roomName, 'assigned_date', getCurrentDate());
+            
+            input.value = '';
+            renderRooms();
+        }
+
+        function toggleRoom(roomName) {
+            const personInput = document.getElementById(`input_${roomName}`);
+            const toggle = document.getElementById(`toggle_${roomName}`);
+            const personName = personInput.value.trim();
+
+            if (!personName) {
+                personInput.focus();
+                return;
+            }
+
+            toggle.classList.add('active');
+            clearTimeout(timers[roomName]);
+
+            timers[roomName] = setTimeout(() => {
+                addToHistory(roomName, personName);
+                
+                personInput.value = '';
+                toggle.classList.remove('active');
+
+                saveData(roomName, 'person', '');
+                saveData(roomName, 'toggle', 'false');
+                saveData(roomName, 'completed_date', getCurrentDate());
+                saveData(roomName, 'assigned_date', '');
+            }, CONFIRM_TIMER);
+
+            saveData(roomName, 'toggle', 'true');
+        }
+
+        function updateExpiryBadge(roomName) {
+            const assignedDate = getData(roomName, 'assigned_date');
+            const completedDate = getData(roomName, 'completed_date');
+            const badge = document.getElementById(`expiry_${roomName}`);
+            
+            if (!badge) return;
+            
+            if (assignedDate && !completedDate) {
+                const remaining = getDaysRemaining(assignedDate);
+                badge.textContent = remaining;
+                badge.className = 'expiry-badge' + (remaining === 'EXPIRADA' ? ' expired' : '');
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function startExpiryUpdater(roomName) {
+            clearInterval(expiryTimers[roomName]);
+            updateExpiryBadge(roomName);
+            
+            expiryTimers[roomName] = setInterval(() => {
+                updateExpiryBadge(roomName);
+            }, 60000);
+        }
+
+        function startTimerDisplay(roomName) {
+            let timeLeft = 3;
+            const timerElement = document.getElementById(`timer_${roomName}`);
+
+            const interval = setInterval(() => {
+                timeLeft--;
+                if (timerElement) {
+                    timerElement.textContent = timeLeft;
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
+
+        function renderRooms() {
+            const container = document.getElementById('roomsContainer');
+            container.innerHTML = '';
+
+            const group = document.createElement('div');
+            group.className = 'room-group';
+
+            ROOMS.forEach(room => {
+                const personName = getData(room.name, 'person');
+                const isActive = getData(room.name, 'toggle') === 'true';
+                const assignedDate = getData(room.name, 'assigned_date');
+
+                const row = document.createElement('div');
+                row.className = 'room-item';
+
+                row.innerHTML = `
+                    <div class="room-icon ${room.className}">B</div>
+                    <div class="room-info">
+                        <div class="room-label">${room.name}</div>
+                        <div class="room-input-wrapper">
+                            <input 
+                                type="text" 
+                                class="room-input" 
+                                id="input_${room.name}"
+                                placeholder="Asignado a"
+                                value="${personName}"
+                                onchange="saveData('${room.name}', 'person', this.value)"
+                            >
+                            <button class="confirm-btn" onclick="confirmName('${room.name}')">OK</button>
+                        </div>
+                    </div>
+                    <div class="room-controls">
+                        ${assignedDate && !getData(room.name, 'completed_date') ? `<div class="expiry-badge" id="expiry_${room.name}"></div>` : ''}
+                        ${isActive ? `<div class="timer-badge" id="timer_${room.name}">3</div>` : ''}
+                        <button 
+                            class="toggle-switch ${isActive ? 'active' : ''}" 
+                            id="toggle_${room.name}"
+                            onclick="toggleRoom('${room.name}')"
+                        ></button>
+                    </div>
+                `;
+
+                group.appendChild(row);
+
+                if (assignedDate) {
+                    startExpiryUpdater(room.name);
+                }
+            });
+
+            container.appendChild(group);
+
+            ROOMS.forEach(room => {
+                if (getData(room.name, 'toggle') === 'true') {
+                    startTimerDisplay(room.name);
+                }
+            });
+        }
+
+        function updateSyncStatus() {
+            const status = document.getElementById('syncStatus');
+            if (isOnline) {
+                status.textContent = '✓ Sincronizado en la nube';
+            } else {
+                status.textContent = '⚠ Modo offline - Los cambios se sincronizarán cuando haya conexión';
+            }
+        }
+
+        // Event listeners
+        window.addEventListener('online', () => {
+            isOnline = true;
+            updateSyncStatus();
+            document.getElementById('syncIndicator').classList.remove('syncing');
+        });
+
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            updateSyncStatus();
+            document.getElementById('syncIndicator').classList.add('syncing');
+        });
+
+        document.getElementById('syncIndicator').addEventListener('click', () => {
+            document.getElementById('syncIndicator').classList.add('syncing');
+            setTimeout(() => {
+                document.getElementById('syncIndicator').classList.remove('syncing');
+            }, 2000);
+        });
+
+        // Inicializar
+        checkFailures();
+        renderRooms();
+        renderHistory();
+        updateSyncStatus();
+    </script>
+</body>
+</html>
