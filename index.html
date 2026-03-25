@@ -192,7 +192,8 @@
             min-width: 0;
         }
 
-        .room-item.has-text .confirm-btn {
+        .room-item.has-text .confirm-btn,
+        .room-item.saved .confirm-btn {
             opacity: 1;
             pointer-events: auto;
             transform: scale(1);
@@ -249,7 +250,6 @@
             align-self: center;
             line-height: 1;
         }
-
 
         .confirm-btn:active {
             opacity: 0.7;
@@ -471,8 +471,6 @@
         .history-content::-webkit-scrollbar { width: 5px; }
         .history-content::-webkit-scrollbar-track { background: transparent; }
         .history-content::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 2px; }
-
-
 
         body.android-pixel {
             font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
@@ -757,14 +755,15 @@
         const CONFIRM_TIMER = 4000;
         const APP_SLUG = 'limpieza-app';
 
-       const firebaseConfig = {
-  apiKey: "AIzaSyDZfCEfl0M2E0ISoWWk_MDxguGkDyT8HpM",
-  authDomain: "limpieza-f8ee7.firebaseapp.com",
-  projectId: "limpieza-f8ee7",
-  storageBucket: "limpieza-f8ee7.firebasestorage.app",
-  messagingSenderId: "7595784094",
-  appId: "1:7595784094:web:8c8d02b8b672eba20a088f"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZfCEfl0M2E0ISoWWk_MDxguGkDyT8HpM",
+            authDomain: "limpieza-f8ee7.firebaseapp.com",
+            projectId: "limpieza-f8ee7",
+            storageBucket: "limpieza-f8ee7.firebasestorage.app",
+            messagingSenderId: "7595784094",
+            appId: "1:7595784094:web:8c8d02b8b672eba20a088f"
+        };
+
         let currentFilter = 'date';
         let isOnline = navigator.onLine;
         let syncBusy = false;
@@ -772,6 +771,8 @@
         const timers = {};
         const roomState = {};
         let historyState = [];
+        let app = null;
+        let db = null;
 
         function getCurrentDate() {
             const now = new Date();
@@ -781,20 +782,20 @@
         const DAY_KEY = getCurrentDate();
 
         function hasFirebaseConfig() {
-    return !!(
-        firebaseConfig.apiKey &&
-        firebaseConfig.authDomain &&
-        firebaseConfig.projectId &&
-        firebaseConfig.appId
-    );
-}
+            return !!(
+                firebaseConfig.apiKey &&
+                firebaseConfig.authDomain &&
+                firebaseConfig.projectId &&
+                firebaseConfig.appId
+            );
+        }
 
         function escapeHtml(text) {
             return String(text ?? '')
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
+                .replace(/\"/g, '&quot;')
                 .replace(/'/g, '&#039;');
         }
 
@@ -920,8 +921,8 @@
         }
 
         function getHistoryCollectionRef(db) {
-    return collection(db, 'apps', APP_SLUG, 'history');
-}
+            return collection(db, 'apps', APP_SLUG, 'history');
+        }
 
         function getDefaultRoomState() {
             return {
@@ -934,9 +935,6 @@
                 updated_at: 0
             };
         }
-
-        let app = null;
-        let db = null;
 
         async function saveRoomData(roomName, patch) {
             if (!db) return;
@@ -962,7 +960,8 @@
                 room: roomName,
                 person: personName,
                 time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-                date: now.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+                date: now.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }),
+                day_key: getCurrentDate(),
                 timestamp: now.getTime(),
                 isFailure
             });
@@ -987,9 +986,9 @@
                     toggle_started_at: 0
                 });
             } catch (error) {
-                console.error(error);
+                console.error('Error al guardar nombre:', error);
                 setSyncIndicator('error');
-                updateSyncStatus('Error al guardar en Firestore');
+                updateSyncStatus(`Error al guardar: ${error.message || 'desconocido'}`);
             }
         }
 
@@ -1022,15 +1021,15 @@
                             assigned_date: ''
                         });
                     } catch (error) {
-                        console.error(error);
+                        console.error('Error al completar la tarea:', error);
                         setSyncIndicator('error');
-                        updateSyncStatus('Error al completar la tarea');
+                        updateSyncStatus(`Error al completar: ${error.message || 'desconocido'}`);
                     }
                 }, CONFIRM_TIMER);
             } catch (error) {
-                console.error(error);
+                console.error('Error al cambiar estado:', error);
                 setSyncIndicator('error');
-                updateSyncStatus('Error al cambiar el estado');
+                updateSyncStatus(`Error al cambiar el estado: ${error.message || 'desconocido'}`);
             }
         }
 
@@ -1060,7 +1059,7 @@
                     await addToHistory(roomName, result.person, true);
                 }
             } catch (error) {
-                console.error(error);
+                console.error('Error al reportar falta:', error);
             }
         }
 
@@ -1109,9 +1108,10 @@
                 const showExpiry = state.assigned_date && !state.completed_date;
                 const showTimer = state.toggle && state.toggle_started_at;
                 const safeValue = escapeHtml(state.person || '');
+                const hasText = !!(state.person || '').trim();
 
                 const row = document.createElement('div');
-                row.className = 'room-item';
+                row.className = `room-item ${hasText ? 'has-text saved' : ''}`;
                 row.innerHTML = `
                     <div class="room-icon ${room.className}">${room.icon}</div>
                     <div class="room-info">
@@ -1173,20 +1173,27 @@
                     renderRooms();
                     reportFailureIfNeeded(room.name);
                 }, (error) => {
-                    console.error(error);
+                    console.error('Error leyendo sala:', room.name, error);
                     setSyncIndicator('error');
-                    updateSyncStatus('No se pudo leer el estado de Firestore');
+                    updateSyncStatus(`No se pudo leer ${room.name}: ${error.message || 'error'}`);
                 });
             });
 
-            const historyQuery = query(getHistoryCollectionRef(db), orderBy('timestamp', 'desc'), limit(100));
+            const historyQuery = query(
+                getHistoryCollectionRef(db),
+                orderBy('timestamp', 'desc'),
+                limit(100)
+            );
+
             onSnapshot(historyQuery, (snapshot) => {
-                historyState = snapshot.docs.map(docItem => docItem.data());
+                historyState = snapshot.docs
+                    .map(docItem => docItem.data())
+                    .filter(item => typeof item.timestamp === 'number');
                 renderHistory();
             }, (error) => {
-                console.error(error);
+                console.error('Error leyendo historial:', error);
                 setSyncIndicator('error');
-                updateSyncStatus('No se pudo leer el historial de Firestore');
+                updateSyncStatus(`No se pudo leer el historial: ${error.message || 'error'}`);
             });
         }
 
@@ -1221,7 +1228,6 @@
         window.confirmName = confirmName;
         window.toggleRoom = toggleRoom;
 
-
         function applyAndroidPixelTheme() {
             const ua = navigator.userAgent || '';
             const isAndroid = /Android/i.test(ua);
@@ -1251,10 +1257,10 @@
                 setSyncIndicator('default');
                 updateSyncStatus();
             } catch (error) {
-                console.error(error);
+                console.error('Error al iniciar Firebase/Firestore:', error);
                 syncBusy = false;
                 setSyncIndicator('error');
-                updateSyncStatus('Error al iniciar Firebase/Firestore');
+                updateSyncStatus(`Error al iniciar Firebase/Firestore: ${error.message || 'desconocido'}`);
             }
         }
 
